@@ -33,15 +33,26 @@ function Library:CreateWindow(title)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = getParent()
 
-    -- Main Frame
+    -- Main Frame (larger and semi-transparent)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Parent = ScreenGui
     MainFrame.BackgroundColor3 = BLACK
-    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
-    MainFrame.Size = UDim2.new(0, 400, 0, 350)
+    MainFrame.BackgroundTransparency = 0.2
+    MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+    MainFrame.Size = UDim2.new(0, 600, 0, 450)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     MainFrame.Active = true
+
+    -- Add a subtle border
+    local Border = Instance.new("Frame")
+    Border.Name = "Border"
+    Border.Parent = MainFrame
+    Border.BackgroundColor3 = GREEN
+    Border.BorderSizePixel = 0
+    Border.Position = UDim2.new(0, -1, 0, -1)
+    Border.Size = UDim2.new(1, 2, 1, 2)
+    Border.ZIndex = -1
 
     -- Title Bar
     local TopBar = Instance.new("Frame")
@@ -57,7 +68,7 @@ function Library:CreateWindow(title)
     Title.Position = UDim2.new(0, 10, 0, 0)
     Title.Size = UDim2.new(1, -40, 1, 0)
     Title.Font = Enum.Font.GothamBold
-    Title.Text = title or "Alchemy Hub [NETA Edition]"
+    Title.Text = title or "Alchemy Hub [NETA Edition : Vanguard]"
     Title.TextColor3 = GREEN
     Title.TextSize = 14
     Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -74,19 +85,94 @@ function Library:CreateWindow(title)
     CloseButton.TextColor3 = GREEN
     CloseButton.TextSize = 20
 
-    -- Container
-    local Container = Instance.new("Frame")
-    Container.Name = "Container"
-    Container.Parent = MainFrame
-    Container.BackgroundTransparency = 1
-    Container.Position = UDim2.new(0, 10, 0, 40)
-    Container.Size = UDim2.new(1, -20, 1, -50)
-    Container.ClipsDescendants = true
+    -- Sidebar
+    local SideBar = Instance.new("Frame")
+    SideBar.Name = "SideBar"
+    SideBar.Parent = MainFrame
+    SideBar.BackgroundColor3 = DARK_BLACK
+    SideBar.BackgroundTransparency = 0.1
+    SideBar.Position = UDim2.new(0, 0, 0, 30)
+    SideBar.Size = UDim2.new(0, 120, 1, -30)
+
+    -- Sidebar Tabs
+    local TabButtons = Instance.new("Frame")
+    TabButtons.Name = "TabButtons"
+    TabButtons.Parent = SideBar
+    TabButtons.BackgroundTransparency = 1
+    TabButtons.Size = UDim2.new(1, 0, 0, 80)
+    TabButtons.Position = UDim2.new(0, 0, 0, 10)
 
     local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Parent = Container
-    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    UIListLayout.Padding = UDim.new(0, 8)
+    UIListLayout.Parent = TabButtons
+    UIListLayout.Padding = UDim.new(0, 5)
+
+    -- Create tabs
+    local Tabs = {}
+    local CurrentTab = nil
+
+    local function CreateTab(name)
+        local TabButton = Instance.new("TextButton")
+        TabButton.Name = name.."Tab"
+        TabButton.Parent = TabButtons
+        TabButton.BackgroundColor3 = GRAY
+        TabButton.BackgroundTransparency = 0.5
+        TabButton.Size = UDim2.new(1, -10, 0, 30)
+        TabButton.Text = name
+        TabButton.Font = Enum.Font.Gotham
+        TabButton.TextColor3 = GREEN
+        TabButton.TextSize = 14
+
+        local TabFrame = Instance.new("Frame")
+        TabFrame.Name = name.."Frame"
+        TabFrame.Parent = MainFrame
+        TabFrame.BackgroundTransparency = 1
+        TabFrame.Position = UDim2.new(0, 130, 0, 35)
+        TabFrame.Size = UDim2.new(1, -140, 1, -40)
+        TabFrame.Visible = false
+
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 4)
+        UICorner.Parent = TabButton
+
+        TabButton.MouseButton1Click:Connect(function()
+            if CurrentTab then
+                CurrentTab.Visible = false
+                TweenService:Create(CurrentTab:FindFirstChildOfClass("TextButton"), TweenInfo.new(0.2), {
+                    BackgroundColor3 = GRAY,
+                    TextColor3 = GREEN
+                }):Play()
+            end
+            
+            CurrentTab = TabFrame
+            TabFrame.Visible = true
+            TweenService:Create(TabButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = DARK_GREEN,
+                TextColor3 = Color3.new(1,1,1)
+            }):Play()
+        end)
+
+        local Container = Instance.new("Frame")
+        Container.Name = "Container"
+        Container.Parent = TabFrame
+        Container.BackgroundTransparency = 1
+        Container.Size = UDim2.new(1, 0, 1, 0)
+        Container.ClipsDescendants = true
+
+        local UIListLayout = Instance.new("UIListLayout")
+        UIListLayout.Parent = Container
+        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        UIListLayout.Padding = UDim.new(0, 8)
+
+        Tabs[name] = Container
+        return Container
+    end
+
+    -- Create default tabs
+    local MainTab = CreateTab("Main")
+    local SettingsTab = CreateTab("Settings")
+
+    -- Activate first tab
+    TabButtons:FindFirstChild("MainTab").MouseButton1Click:Wait()
 
     -- Dragging
     local dragging = false
@@ -128,11 +214,13 @@ function Library:CreateWindow(title)
 
     local window = {}
 
-    function window:AddButton(text, callback)
+    function window:AddButton(text, callback, tab)
+        local container = Tabs[tab or "Main"]
         local Button = Instance.new("TextButton")
         Button.Name = "Button"
-        Button.Parent = Container
+        Button.Parent = container
         Button.BackgroundColor3 = GRAY
+        Button.BackgroundTransparency = 0.5
         Button.Size = UDim2.new(1, 0, 0, 35)
         Button.Font = Enum.Font.Gotham
         Button.Text = text or "Click Me"
@@ -165,11 +253,13 @@ function Library:CreateWindow(title)
         return Button
     end
 
-    function window:AddToggle(text, default, callback)
+    function window:AddToggle(text, default, callback, tab)
+        local container = Tabs[tab or "Main"]
         local Toggle = Instance.new("TextButton")
         Toggle.Name = "Toggle"
-        Toggle.Parent = Container
+        Toggle.Parent = container
         Toggle.BackgroundColor3 = GRAY
+        Toggle.BackgroundTransparency = 0.5
         Toggle.Size = UDim2.new(1, 0, 0, 35)
         Toggle.Text = ""
         Toggle.AutoButtonColor = false
@@ -229,11 +319,13 @@ function Library:CreateWindow(title)
         return Toggle
     end
 
-    function window:AddSlider(text, min, max, default, callback)
+    function window:AddSlider(text, min, max, default, callback, tab)
+        local container = Tabs[tab or "Main"]
         local Slider = Instance.new("Frame")
         Slider.Name = "Slider"
-        Slider.Parent = Container
+        Slider.Parent = container
         Slider.BackgroundColor3 = GRAY
+        Slider.BackgroundTransparency = 0.5
         Slider.Size = UDim2.new(1, 0, 0, 50)
 
         local UICorner = Instance.new("UICorner")
@@ -300,14 +392,25 @@ end
 
 -- Example Usage
 local UI = Library:CreateWindow("Alchemy Hub [NETA Edition]")
+
+-- Main Tab
 UI:AddButton("Auto Join", function()
     print("Auto Join clicked!")
-end)
+end, "Main")
 
 UI:AddToggle("Macro", false, function(state)
     print("Macro:", state)
-end)
+end, "Main")
 
 UI:AddSlider("Volume", 0, 100, 50, function(value)
     print("Volume set to:", value)
-end)
+end, "Main")
+
+-- Settings Tab
+UI:AddToggle("Enable Notifications", true, function(state)
+    print("Notifications:", state)
+end, "Settings")
+
+UI:AddSlider("Opacity", 0, 100, 20, function(value)
+    print("Opacity set to:", value)
+end, "Settings")
