@@ -1,416 +1,136 @@
-local Library = {}
+-- Proximity Hub [Premium Edition]
+-- Created by [Your Name], May 2024
 
--- Services
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local Players = game:GetService("Players")
+local ProximityHub = {}
 
--- Colors
-local GREEN = Color3.fromRGB(0, 255, 0)
-local DARK_GREEN = Color3.fromRGB(0, 100, 0)
-local BLACK = Color3.fromRGB(20, 20, 20)
-local DARK_BLACK = Color3.fromRGB(10, 10, 10)
-local GRAY = Color3.fromRGB(50, 50, 50)
+-- Library settings
+ProximityHub.Settings = {
+    ThemeColor = Color3.fromRGB(125, 60, 255),  -- Purple theme
+    TextColor = Color3.fromRGB(255, 255, 255),  -- White text
+    BackgroundColor = Color3.fromRGB(26, 26, 26) -- Dark background
+}
 
--- Get correct screen gui parent
-local function getParent()
-    if gethui then
-        return gethui()
-    elseif syn and syn.protect_gui then
-        local gui = Instance.new("ScreenGui")
-        syn.protect_gui(gui)
-        gui.Parent = game:GetService("CoreGui")
-        return gui
-    else
-        return game:GetService("CoreGui")
+-- Main functions
+ProximityHub.Main = {
+    Automatically = function()
+        -- Automatic functionality implementation
+        print("Automatic mode activated")
+    end,
+    
+    ChangeChat = function()
+        -- Change chat implementation
+        print("Chat changed")
+    end,
+    
+    Webhooks = function()
+        -- Webhooks implementation
+        print("Webhooks configured")
     end
-end
+}
 
-function Library:CreateWindow(title)
+-- Settings functions
+ProximityHub.SettingsTab = {
+    AutoAttack = function(state)
+        -- Auto attack toggle
+        print("Auto Attack:", state and "Enabled" or "Disabled")
+    end,
+    
+    Skill = function()
+        -- Skill settings
+        print("Skill settings opened")
+    end,
+    
+    AutoSkill = function(state)
+        -- Auto skill toggle
+        print("Auto Skill:", state and "Enabled" or "Disabled")
+    end
+}
+
+-- Monster Targeting functions
+ProximityHub.MonTargets = {
+    Farm = function()
+        -- Farm implementation
+        print("Farming activated")
+    end,
+    
+    AutoFarmAll = function()
+        -- Auto farm all implementation
+        print("Auto Farm (All) activated")
+    end,
+    
+    AutoFarmTargets = function()
+        -- Auto farm targets implementation
+        print("Auto Farm (Targets) activated")
+    end
+}
+
+-- UI Creation function
+function ProximityHub:CreateUI()
+    -- Create ScreenGui
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "AlchemyHub"
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.ResetOnSpawn = false
-    ScreenGui.Parent = getParent()
-
-    -- Main Frame (larger and semi-transparent)
+    ScreenGui.Name = "ProximityHubUI"
+    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    -- Main Frame
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Parent = ScreenGui
-    MainFrame.BackgroundColor3 = BLACK
-    MainFrame.BackgroundTransparency = 0.2
-    MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
-    MainFrame.Size = UDim2.new(0, 600, 0, 450)
+    MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
     MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    MainFrame.Active = true
-
-    -- Add a subtle border
-    local Border = Instance.new("Frame")
-    Border.Name = "Border"
-    Border.Parent = MainFrame
-    Border.BackgroundColor3 = GREEN
-    Border.BorderSizePixel = 0
-    Border.Position = UDim2.new(0, -1, 0, -1)
-    Border.Size = UDim2.new(1, 2, 1, 2)
-    Border.ZIndex = -1
-
-    -- Title Bar
-    local TopBar = Instance.new("Frame")
-    TopBar.Name = "TopBar"
-    TopBar.Parent = MainFrame
-    TopBar.BackgroundColor3 = DARK_BLACK
-    TopBar.Size = UDim2.new(1, 0, 0, 30)
+    MainFrame.BackgroundColor3 = self.Settings.BackgroundColor
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Parent = ScreenGui
     
+    -- Title Label
     local Title = Instance.new("TextLabel")
     Title.Name = "Title"
-    Title.Parent = TopBar
+    Title.Text = "Proximity Hub [Premium Edition]"
+    Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.Position = UDim2.new(0, 0, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Position = UDim2.new(0, 10, 0, 0)
-    Title.Size = UDim2.new(1, -40, 1, 0)
+    Title.TextColor3 = Color3.fromRGB(177, 156, 217)  -- Light purple
     Title.Font = Enum.Font.GothamBold
-    Title.Text = title or "Alchemy Hub [NETA Edition : Vanguard]"
-    Title.TextColor3 = GREEN
-    Title.TextSize = 14
-    Title.TextXAlignment = Enum.TextXAlignment.Left
-
-    -- Close Button
-    local CloseButton = Instance.new("TextButton")
-    CloseButton.Name = "CloseButton"
-    CloseButton.Parent = TopBar
-    CloseButton.BackgroundTransparency = 1
-    CloseButton.Position = UDim2.new(1, -25, 0, 5)
-    CloseButton.Size = UDim2.new(0, 20, 0, 20)
-    CloseButton.Font = Enum.Font.GothamBold
-    CloseButton.Text = "×"
-    CloseButton.TextColor3 = GREEN
-    CloseButton.TextSize = 20
-
-    -- Sidebar
-    local SideBar = Instance.new("Frame")
-    SideBar.Name = "SideBar"
-    SideBar.Parent = MainFrame
-    SideBar.BackgroundColor3 = DARK_BLACK
-    SideBar.BackgroundTransparency = 0.1
-    SideBar.Position = UDim2.new(0, 0, 0, 30)
-    SideBar.Size = UDim2.new(0, 120, 1, -30)
-
-    -- Sidebar Tabs
-    local TabButtons = Instance.new("Frame")
-    TabButtons.Name = "TabButtons"
-    TabButtons.Parent = SideBar
-    TabButtons.BackgroundTransparency = 1
-    TabButtons.Size = UDim2.new(1, 0, 0, 80)
-    TabButtons.Position = UDim2.new(0, 0, 0, 10)
-
-    local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Parent = TabButtons
-    UIListLayout.Padding = UDim.new(0, 5)
-
-    -- Create tabs
-    local Tabs = {}
-    local CurrentTab = nil
-
-    local function CreateTab(name)
-        local TabButton = Instance.new("TextButton")
-        TabButton.Name = name.."Tab"
-        TabButton.Parent = TabButtons
-        TabButton.BackgroundColor3 = GRAY
-        TabButton.BackgroundTransparency = 0.5
-        TabButton.Size = UDim2.new(1, -10, 0, 30)
-        TabButton.Text = name
-        TabButton.Font = Enum.Font.Gotham
-        TabButton.TextColor3 = GREEN
-        TabButton.TextSize = 14
-
-        local TabFrame = Instance.new("Frame")
-        TabFrame.Name = name.."Frame"
-        TabFrame.Parent = MainFrame
-        TabFrame.BackgroundTransparency = 1
-        TabFrame.Position = UDim2.new(0, 130, 0, 35)
-        TabFrame.Size = UDim2.new(1, -140, 1, -40)
-        TabFrame.Visible = false
-
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 4)
-        UICorner.Parent = TabButton
-
-        TabButton.MouseButton1Click:Connect(function()
-            if CurrentTab then
-                CurrentTab.Visible = false
-                TweenService:Create(CurrentTab:FindFirstChildOfClass("TextButton"), TweenInfo.new(0.2), {
-                    BackgroundColor3 = GRAY,
-                    TextColor3 = GREEN
-                }):Play()
-            end
-            
-            CurrentTab = TabFrame
-            TabFrame.Visible = true
-            TweenService:Create(TabButton, TweenInfo.new(0.2), {
-                BackgroundColor3 = DARK_GREEN,
-                TextColor3 = Color3.new(1,1,1)
-            }):Play()
-        end)
-
-        local Container = Instance.new("Frame")
-        Container.Name = "Container"
-        Container.Parent = TabFrame
-        Container.BackgroundTransparency = 1
-        Container.Size = UDim2.new(1, 0, 1, 0)
-        Container.ClipsDescendants = true
-
-        local UIListLayout = Instance.new("UIListLayout")
-        UIListLayout.Parent = Container
-        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        UIListLayout.Padding = UDim.new(0, 8)
-
-        Tabs[name] = Container
-        return Container
-    end
-
-    -- Create default tabs
-    local MainTab = CreateTab("Main")
-    local SettingsTab = CreateTab("Settings")
-
-    -- Activate first tab
-    TabButtons:FindFirstChild("MainTab").MouseButton1Click:Wait()
-
-    -- Dragging
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    local function updateInput(input)
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-
-    TopBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
+    Title.TextSize = 18
+    Title.Parent = MainFrame
+    
+    -- Tab Buttons
+    local function CreateButton(name, text, positionY, callback)
+        local button = Instance.new("TextButton")
+        button.Name = name
+        button.Text = text
+        button.Size = UDim2.new(0.9, 0, 0, 35)
+        button.Position = UDim2.new(0.05, 0, 0, positionY)
+        button.BackgroundColor3 = self.Settings.ThemeColor
+        button.TextColor3 = self.Settings.TextColor
+        button.Font = Enum.Font.Gotham
+        button.TextSize = 14
+        button.Parent = MainFrame
+        
+        if callback then
+            button.MouseButton1Click:Connect(callback)
         end
+        
+        return button
+    end
+    
+    -- Main Tab
+    CreateButton("AutomaticallyBtn", "Automatically", 50, self.Main.Automatically)
+    CreateButton("ChangeChatBtn", "Change Chat", 90, self.Main.ChangeChat)
+    CreateButton("WebhooksBtn", "Webhooks", 130, self.Main.Webhooks)
+    
+    -- Settings Tab
+    CreateButton("AutoAttackBtn", "Auto Attack", 190, function()
+        self.SettingsTab.AutoAttack(true)
     end)
-
-    TopBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
+    CreateButton("SkillBtn", "Skill", 230, self.SettingsTab.Skill)
+    CreateButton("AutoSkillBtn", "Auto Skill", 270, function()
+        self.SettingsTab.AutoSkill(true)
     end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            updateInput(input)
-        end
-    end)
-
-    CloseButton.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
-    end)
-
-    local window = {}
-
-    function window:AddButton(text, callback, tab)
-        local container = Tabs[tab or "Main"]
-        local Button = Instance.new("TextButton")
-        Button.Name = "Button"
-        Button.Parent = container
-        Button.BackgroundColor3 = GRAY
-        Button.BackgroundTransparency = 0.5
-        Button.Size = UDim2.new(1, 0, 0, 35)
-        Button.Font = Enum.Font.Gotham
-        Button.Text = text or "Click Me"
-        Button.TextColor3 = GREEN
-        Button.TextSize = 14
-        Button.AutoButtonColor = false
-
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 4)
-        UICorner.Parent = Button
-
-        Button.MouseEnter:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), {
-                BackgroundColor3 = DARK_GREEN,
-                TextColor3 = Color3.new(1,1,1)
-            }):Play()
-        end)
-
-        Button.MouseLeave:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), {
-                BackgroundColor3 = GRAY,
-                TextColor3 = GREEN
-            }):Play()
-        end)
-
-        Button.MouseButton1Click:Connect(function()
-            pcall(callback)
-        end)
-
-        return Button
-    end
-
-    function window:AddToggle(text, default, callback, tab)
-        local container = Tabs[tab or "Main"]
-        local Toggle = Instance.new("TextButton")
-        Toggle.Name = "Toggle"
-        Toggle.Parent = container
-        Toggle.BackgroundColor3 = GRAY
-        Toggle.BackgroundTransparency = 0.5
-        Toggle.Size = UDim2.new(1, 0, 0, 35)
-        Toggle.Text = ""
-        Toggle.AutoButtonColor = false
-
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 4)
-        UICorner.Parent = Toggle
-
-        local Title = Instance.new("TextLabel")
-        Title.Name = "Title"
-        Title.Parent = Toggle
-        Title.BackgroundTransparency = 1
-        Title.Position = UDim2.new(0, 10, 0, 0)
-        Title.Size = UDim2.new(0, 200, 1, 0)
-        Title.Font = Enum.Font.Gotham
-        Title.Text = text or "Enable Feature"
-        Title.TextColor3 = GREEN
-        Title.TextSize = 14
-        Title.TextXAlignment = Enum.TextXAlignment.Left
-
-        local ToggleFrame = Instance.new("Frame")
-        ToggleFrame.Name = "ToggleFrame"
-        ToggleFrame.Parent = Toggle
-        ToggleFrame.BackgroundColor3 = DARK_BLACK
-        ToggleFrame.Position = UDim2.new(1, -45, 0.5, -10)
-        ToggleFrame.Size = UDim2.new(0, 35, 0, 20)
-
-        local ToggleInner = Instance.new("Frame")
-        ToggleInner.Name = "ToggleInner"
-        ToggleInner.Parent = ToggleFrame
-        ToggleInner.BackgroundColor3 = GREEN
-        ToggleInner.Position = UDim2.new(0, 2, 0.5, -8)
-        ToggleInner.Size = UDim2.new(0, 16, 0, 16)
-
-        local toggled = default or false
-        local function updateToggle()
-            if toggled then
-                TweenService:Create(ToggleInner, TweenInfo.new(0.2), {
-                    Position = UDim2.new(1, -18, 0.5, -8),
-                    BackgroundColor3 = GREEN
-                }):Play()
-            else
-                TweenService:Create(ToggleInner, TweenInfo.new(0.2), {
-                    Position = UDim2.new(0, 2, 0.5, -8),
-                    BackgroundColor3 = Color3.fromRGB(150, 150, 150)
-                }):Play()
-            end
-        end
-
-        Toggle.MouseButton1Click:Connect(function()
-            toggled = not toggled
-            updateToggle()
-            pcall(callback, toggled)
-        end)
-
-        updateToggle()
-        return Toggle
-    end
-
-    function window:AddSlider(text, min, max, default, callback, tab)
-        local container = Tabs[tab or "Main"]
-        local Slider = Instance.new("Frame")
-        Slider.Name = "Slider"
-        Slider.Parent = container
-        Slider.BackgroundColor3 = GRAY
-        Slider.BackgroundTransparency = 0.5
-        Slider.Size = UDim2.new(1, 0, 0, 50)
-
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 4)
-        UICorner.Parent = Slider
-
-        local Title = Instance.new("TextLabel")
-        Title.Name = "Title"
-        Title.Parent = Slider
-        Title.BackgroundTransparency = 1
-        Title.Position = UDim2.new(0, 10, 0, 0)
-        Title.Size = UDim2.new(1, -20, 0, 25)
-        Title.Font = Enum.Font.Gotham
-        Title.Text = text or "Volume Slider"
-        Title.TextColor3 = GREEN
-        Title.TextSize = 14
-        Title.TextXAlignment = Enum.TextXAlignment.Left
-
-        local SliderBar = Instance.new("Frame")
-        SliderBar.Name = "SliderBar"
-        SliderBar.Parent = Slider
-        SliderBar.BackgroundColor3 = DARK_BLACK
-        SliderBar.Position = UDim2.new(0, 10, 0, 30)
-        SliderBar.Size = UDim2.new(1, -20, 0, 5)
-
-        local SliderFill = Instance.new("Frame")
-        SliderFill.Name = "SliderFill"
-        SliderFill.Parent = SliderBar
-        SliderFill.BackgroundColor3 = GREEN
-        SliderFill.Size = UDim2.new(0.5, 0, 1, 0)
-
-        local SliderValue = Instance.new("TextLabel")
-        SliderValue.Name = "SliderValue"
-        SliderValue.Parent = Slider
-        SliderValue.BackgroundTransparency = 1
-        SliderValue.Position = UDim2.new(1, -50, 0, 0)
-        SliderValue.Size = UDim2.new(0, 40, 0, 25)
-        SliderValue.Font = Enum.Font.Gotham
-        SliderValue.Text = tostring(default or min)
-        SliderValue.TextColor3 = GREEN
-        SliderValue.TextSize = 14
-
-        local function updateSlider(value)
-            value = math.clamp(value, min, max)
-            local percent = (value - min) / (max - min)
-            SliderFill.Size = UDim2.new(percent, 0, 1, 0)
-            SliderValue.Text = tostring(math.floor(value))
-            pcall(callback, value)
-        end
-
-        SliderBar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                local percent = (input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X
-                updateSlider(min + (max - min) * percent)
-            end
-        end)
-
-        updateSlider(default or min)
-        return Slider
-    end
-
-    return window
+    
+    -- Mon Targets Tab
+    CreateButton("FarmBtn", "Farm", 330, self.MonTargets.Farm)
+    CreateButton("AutoFarmAllBtn", "Auto Farm (All)", 370, self.MonTargets.AutoFarmAll)
+    CreateButton("AutoFarmTargetsBtn", "Auto Farm (Targets)", 410, self.MonTargets.AutoFarmTargets)
 end
 
--- Example Usage
-local UI = Library:CreateWindow("Alchemy Hub [NETA Edition]")
-
--- Main Tab
-UI:AddButton("Auto Join", function()
-    print("Auto Join clicked!")
-end, "Main")
-
-UI:AddToggle("Macro", false, function(state)
-    print("Macro:", state)
-end, "Main")
-
-UI:AddSlider("Volume", 0, 100, 50, function(value)
-    print("Volume set to:", value)
-end, "Main")
-
--- Settings Tab
-UI:AddToggle("Enable Notifications", true, function(state)
-    print("Notifications:", state)
-end, "Settings")
-
-UI:AddSlider("Opacity", 0, 100, 20, function(value)
-    print("Opacity set to:", value)
-end, "Settings")
+return ProximityHub
