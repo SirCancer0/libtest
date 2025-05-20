@@ -1,136 +1,500 @@
--- Proximity Hub [Premium Edition]
--- Created by [Your Name], May 2024
-
-local ProximityHub = {}
-
--- Library settings
-ProximityHub.Settings = {
-    ThemeColor = Color3.fromRGB(125, 60, 255),  -- Purple theme
-    TextColor = Color3.fromRGB(255, 255, 255),  -- White text
-    BackgroundColor = Color3.fromRGB(26, 26, 26) -- Dark background
+local ProximityHub = {
+    Config = {
+        ['MainColor'] = Color3.fromRGB(170, 0, 255), -- Purple main color
+        ['DropColor'] = Color3.fromRGB(100, 0, 150), -- Darker purple
+        ['UI Size'] = UDim2.new(0.1, 440, 0.1, 280)
+    },
+    CoreGui = game:FindFirstChild('CoreGui') or game.Players.LocalPlayer.PlayerGui,
+    Windows = {},
 }
 
--- Main functions
-ProximityHub.Main = {
-    Automatically = function()
-        -- Automatic functionality implementation
-        print("Automatic mode activated")
-    end,
-    
-    ChangeChat = function()
-        -- Change chat implementation
-        print("Chat changed")
-    end,
-    
-    Webhooks = function()
-        -- Webhooks implementation
-        print("Webhooks configured")
+local pairs = pairs
+local ipairs = ipairs
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local TextService = game:GetService("TextService")
+
+local function ProtectGui(gui)
+    if syn and syn.protect_gui then
+        syn.protect_gui(gui)
+    elseif gethui then
+        gui.Parent = gethui()
+    else
+        gui.Parent = game:GetService("CoreGui")
     end
-}
+end
 
--- Settings functions
-ProximityHub.SettingsTab = {
-    AutoAttack = function(state)
-        -- Auto attack toggle
-        print("Auto Attack:", state and "Enabled" or "Disabled")
-    end,
-    
-    Skill = function()
-        -- Skill settings
-        print("Skill settings opened")
-    end,
-    
-    AutoSkill = function(state)
-        -- Auto skill toggle
-        print("Auto Skill:", state and "Enabled" or "Disabled")
-    end
-}
+local function Tween(obj, props, duration, easing)
+    TweenService:Create(
+        obj,
+        TweenInfo.new(duration, easing or Enum.EasingStyle.Quad),
+        props
+    ):Play()
+end
 
--- Monster Targeting functions
-ProximityHub.MonTargets = {
-    Farm = function()
-        -- Farm implementation
-        print("Farming activated")
-    end,
-    
-    AutoFarmAll = function()
-        -- Auto farm all implementation
-        print("Auto Farm (All) activated")
-    end,
-    
-    AutoFarmTargets = function()
-        -- Auto farm targets implementation
-        print("Auto Farm (Targets) activated")
-    end
-}
+local function CreateButton(parent)
+    local button = Instance.new('TextButton')
+    button.Size = UDim2.new(1, 0, 1, 0)
+    button.BackgroundTransparency = 1
+    button.TextTransparency = 1
+    button.Text = ""
+    button.Parent = parent
+    button.ZIndex = 5000
+    return button
+end
 
--- UI Creation function
-function ProximityHub:CreateUI()
-    -- Create ScreenGui
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "ProximityHubUI"
-    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+function ProximityHub:GetTextSize(textLabel)
+    return TextService:GetTextSize(textLabel.Text, textLabel.TextSize, textLabel.Font, Vector2.new(math.huge, math.huge))
+end
+
+local function SetupScrollingY(scrollFrame)
+    task.spawn(function()
+        local padding = 1
+        local layout = scrollFrame:WaitForChild('UIListLayout', 9999999)
+        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + padding)
+        
+        layout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
+            scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + padding)
+        end)
+    end)
+end
+
+local function SetupScrollingX(scrollFrame)
+    task.spawn(function()
+        local padding = 1
+        local layout = scrollFrame:WaitForChild('UIListLayout', 9999999)
+        scrollFrame.CanvasSize = UDim2.new(0, layout.AbsoluteContentSize.X + padding, 0, 0)
+        
+        layout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
+            scrollFrame.CanvasSize = UDim2.new(0, layout.AbsoluteContentSize.X + padding, 0, 0)
+        end)
+    end)
+end
+
+function ProximityHub:NewWindow(windowName, windowDescription)
+    windowName = windowName or "Proximity Hub"
+    windowDescription = windowDescription or "Premium Script Hub"
     
+    local window = {
+        Toggle = Enum.KeyCode.RightControl,
+        Tabs = {},
+        TabSelect = 1
+    }
+
+    -- Main UI Container
+    local mainUI = Instance.new("ScreenGui")
+    mainUI.Name = "ProximityHubUI"
+    mainUI.ResetOnSpawn = false
+    mainUI.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    ProtectGui(mainUI)
+
     -- Main Frame
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 300, 0, 400)
-    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    MainFrame.BackgroundColor3 = self.Settings.BackgroundColor
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Parent = ScreenGui
-    
-    -- Title Label
-    local Title = Instance.new("TextLabel")
-    Title.Name = "Title"
-    Title.Text = "Proximity Hub [Premium Edition]"
-    Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.Position = UDim2.new(0, 0, 0, 0)
-    Title.BackgroundTransparency = 1
-    Title.TextColor3 = Color3.fromRGB(177, 156, 217)  -- Light purple
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 18
-    Title.Parent = MainFrame
-    
-    -- Tab Buttons
-    local function CreateButton(name, text, positionY, callback)
-        local button = Instance.new("TextButton")
-        button.Name = name
-        button.Text = text
-        button.Size = UDim2.new(0.9, 0, 0, 35)
-        button.Position = UDim2.new(0.05, 0, 0, positionY)
-        button.BackgroundColor3 = self.Settings.ThemeColor
-        button.TextColor3 = self.Settings.TextColor
-        button.Font = Enum.Font.Gotham
-        button.TextSize = 14
-        button.Parent = MainFrame
-        
-        if callback then
-            button.MouseButton1Click:Connect(callback)
-        end
-        
-        return button
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Parent = mainUI
+    mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    mainFrame.BackgroundTransparency = 0.2
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    mainFrame.Size = UDim2.new(0, 0, 0, 0)
+    mainFrame.SizeConstraint = Enum.SizeConstraint.RelativeYY
+    mainFrame.ClipsDescendants = true
+
+    -- Animate window opening
+    Tween(mainFrame, {Size = self.Config["UI Size"]}, 1.5)
+
+    -- Window Corner
+    local corner = Instance.new("UICorner")
+    corner.Parent = mainFrame
+
+    -- Shadow
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "DropShadow"
+    shadow.Parent = mainFrame
+    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    shadow.BackgroundTransparency = 1
+    shadow.BorderSizePixel = 0
+    shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    shadow.Size = UDim2.new(1, 47, 1, 47)
+    shadow.ZIndex = 0
+    shadow.Image = "rbxassetid://6015897843"
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.5
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+
+    -- Top Bar
+    local topBar = Instance.new("Frame")
+    topBar.Name = "TopBar"
+    topBar.Parent = mainFrame
+    topBar.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    topBar.BackgroundTransparency = 0.2
+    topBar.BorderSizePixel = 0
+    topBar.Size = UDim2.new(1, 0, 0.09, 0)
+    topBar.ZIndex = 2
+
+    -- Bottom Frame Bar
+    local bottomBar = Instance.new("Frame")
+    bottomBar.Parent = mainFrame
+    bottomBar.AnchorPoint = Vector2.new(0.5, 0.5)
+    bottomBar.BackgroundColor3 = self.Config.MainColor
+    bottomBar.BorderSizePixel = 0
+    bottomBar.BackgroundTransparency = 0.5
+    bottomBar.Position = UDim2.new(0.5, 0, 0.1, 0)
+    bottomBar.Size = UDim2.new(0.95, 0, 0.005, 0)
+    bottomBar.ZIndex = 5
+
+    -- Gradient for bottom bar
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
+        ColorSequenceKeypoint.new(0.5, self.Config.MainColor),
+        ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
+    })
+    gradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.5),
+        NumberSequenceKeypoint.new(0.6, 0),
+        NumberSequenceKeypoint.new(1, 0.5)
+    })
+    gradient.Parent = bottomBar
+
+    -- Hub Logo
+    local hubLogo = Instance.new("ImageLabel")
+    hubLogo.Name = "HubLogo"
+    hubLogo.Parent = topBar
+    hubLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+    hubLogo.BackgroundTransparency = 1
+    hubLogo.BorderSizePixel = 0
+    hubLogo.Position = UDim2.new(0.045, 0, 0.6, 0)
+    hubLogo.Size = UDim2.new(0.9, 0, 0.9, 0)
+    hubLogo.SizeConstraint = Enum.SizeConstraint.RelativeYY
+    hubLogo.ZIndex = 3
+    hubLogo.Image = "rbxassetid://7140156095" -- Your icon ID
+
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Name = "Title"
+    title.Parent = topBar
+    title.BackgroundTransparency = 1
+    title.Position = UDim2.new(0.103, 0, 0.21, 0)
+    title.Size = UDim2.new(0.897, 0, 0.434, 0)
+    title.ZIndex = 3
+    title.Font = Enum.Font.GothamBold
+    title.Text = "PROXIMITY <font color='rgb(170,0,255)'>HUB</font>"
+    title.RichText = true
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextScaled = true
+    title.TextSize = 14
+    title.TextWrapped = true
+    title.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Description
+    local description = Instance.new("TextLabel")
+    description.Name = "Description"
+    description.Parent = topBar
+    description.BackgroundTransparency = 1
+    description.Position = UDim2.new(0.103, 0, 0.654, 0)
+    description.Size = UDim2.new(0, 80, 0.3, 0)
+    description.ZIndex = 3
+    description.Font = Enum.Font.GothamBold
+    description.Text = windowDescription
+    description.TextColor3 = Color3.fromRGB(200, 200, 200)
+    title.TextSize = 10
+    description.TextWrapped = true
+    description.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Menu Frames
+    local menuFrames = Instance.new("Frame")
+    menuFrames.Name = "MenuFrames"
+    menuFrames.Parent = mainFrame
+    menuFrames.AnchorPoint = Vector2.new(0.5, 0)
+    menuFrames.BackgroundTransparency = 1
+    menuFrames.BorderSizePixel = 0
+    menuFrames.Position = UDim2.new(0.5, 0, 0.075, 0)
+    menuFrames.Size = UDim2.new(0.95, 0, 0.08, 0)
+    menuFrames.ZIndex = 2
+
+    -- Menu Scroll
+    local menuScroll = Instance.new("ScrollingFrame")
+    menuScroll.Name = "MenuScroll"
+    menuScroll.Parent = menuFrames
+    menuScroll.Active = true
+    menuScroll.BackgroundTransparency = 1
+    menuScroll.BorderSizePixel = 0
+    menuScroll.Size = UDim2.new(1, 0, 1, 0)
+    menuScroll.ZIndex = 3
+    menuScroll.CanvasSize = UDim2.new(2, 0, 0, 0)
+    menuScroll.ScrollBarThickness = 0
+
+    SetupScrollingX(menuScroll)
+
+    -- Menu Layout
+    local menuLayout = Instance.new("UIListLayout")
+    menuLayout.Parent = menuScroll
+    menuLayout.FillDirection = Enum.FillDirection.Horizontal
+    menuLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    menuLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    menuLayout.Padding = UDim.new(0, 8)
+
+    -- Close UI Button
+    local closeButton = Instance.new("ImageButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Parent = topBar
+    closeButton.AnchorPoint = Vector2.new(1, 0)
+    closeButton.BackgroundTransparency = 1
+    closeButton.Position = UDim2.new(1, -8, 0, 10)
+    closeButton.Size = UDim2.new(0, 20, 0, 20)
+    closeButton.Image = "rbxassetid://10747384394"
+    closeButton.ZIndex = 5
+
+    closeButton.MouseButton1Click:Connect(function()
+        Tween(mainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back)
+        wait(0.5)
+        mainUI:Destroy()
+    end)
+
+    -- Dragging functionality
+    local dragging = false
+    local dragStart, startPos
+
+    local function UpdateDrag(input)
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
     end
-    
-    -- Main Tab
-    CreateButton("AutomaticallyBtn", "Automatically", 50, self.Main.Automatically)
-    CreateButton("ChangeChatBtn", "Change Chat", 90, self.Main.ChangeChat)
-    CreateButton("WebhooksBtn", "Webhooks", 130, self.Main.Webhooks)
-    
-    -- Settings Tab
-    CreateButton("AutoAttackBtn", "Auto Attack", 190, function()
-        self.SettingsTab.AutoAttack(true)
+
+    topBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
     end)
-    CreateButton("SkillBtn", "Skill", 230, self.SettingsTab.Skill)
-    CreateButton("AutoSkillBtn", "Auto Skill", 270, function()
-        self.SettingsTab.AutoSkill(true)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+            UpdateDrag(input)
+        end
     end)
+
+    -- Toggle UI
+    local toggleUI = Instance.new("ScreenGui")
+    local toggleFrame = Instance.new("Frame")
+    local toggleCorner = Instance.new("UICorner")
+    local toggleLogo = Instance.new("ImageLabel")
+    local toggleShadow = Instance.new("ImageLabel")
+
+    toggleUI.Name = "ToggleUI"
+    toggleUI.Parent = self.CoreGui
+    toggleUI.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+    toggleFrame.Name = "ToggleFrame"
+    toggleFrame.Parent = toggleUI
+    toggleFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    toggleFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    toggleFrame.BorderSizePixel = 0
+    toggleFrame.Position = UDim2.new(0.12, 0, 0.095, 0)
+    toggleFrame.Size = UDim2.new(0, 65, 0, 65)
+    toggleFrame.SizeConstraint = Enum.SizeConstraint.RelativeYY
+    toggleFrame.ZIndex = 67
+
+    toggleCorner.Parent = toggleFrame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(60, 60, 60)
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = toggleFrame
+
+    toggleLogo.Name = "Logo"
+    toggleLogo.Parent = toggleFrame
+    toggleLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+    toggleLogo.BackgroundTransparency = 1
+    toggleLogo.Position = UDim2.new(0.5, 0, 0.5, 0)
+    toggleLogo.Size = UDim2.new(0.9, 0, 0.9, 0)
+    toggleLogo.ZIndex = 68
+    toggleLogo.Image = "rbxassetid://7140156095" -- Your icon ID
+
+    toggleShadow.Name = "DropShadow"
+    toggleShadow.Parent = toggleFrame
+    toggleShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    toggleShadow.BackgroundTransparency = 1
+    toggleShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    toggleShadow.Size = UDim2.new(1, 47, 1, 47)
+    toggleShadow.ZIndex = 66
+    toggleShadow.Image = "rbxassetid://6015897843"
+    toggleShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    toggleShadow.ImageTransparency = 0.5
+    toggleShadow.ScaleType = Enum.ScaleType.Slice
+    toggleShadow.SliceCenter = Rect.new(49, 49, 450, 450)
+
+    -- Toggle button functionality
+    local toggleButton = CreateButton(toggleFrame)
+    toggleButton.ZIndex = 68
     
-    -- Mon Targets Tab
-    CreateButton("FarmBtn", "Farm", 330, self.MonTargets.Farm)
-    CreateButton("AutoFarmAllBtn", "Auto Farm (All)", 370, self.MonTargets.AutoFarmAll)
-    CreateButton("AutoFarmTargetsBtn", "Auto Farm (Targets)", 410, self.MonTargets.AutoFarmTargets)
+    local isUIVisible = true
+    toggleButton.MouseButton1Click:Connect(function()
+        isUIVisible = not isUIVisible
+        if isUIVisible then
+            Tween(mainFrame, {Size = self.Config["UI Size"]}, 0.5)
+        else
+            Tween(mainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back)
+        end
+    end)
+
+    -- Keybind toggle
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        if input.KeyCode == window.Toggle then
+            isUIVisible = not isUIVisible
+            if isUIVisible then
+                Tween(mainFrame, {Size = self.Config["UI Size"]}, 0.5)
+            else
+                Tween(mainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back)
+            end
+        end
+    end)
+
+    -- Tab functionality
+    function window:AddTab(tabName, tabDescription, tabIcon)
+        tabName = tabName or "Tab"
+        tabDescription = tabDescription or "Description"
+        tabIcon = tabIcon or "rbxassetid://7734052925" -- Default icon
+
+        local tab = {
+            Checker = {}
+        }
+
+        -- Tab Button
+        local tabButton = Instance.new("Frame")
+        local aspectRatio = Instance.new("UIAspectRatioConstraint")
+        local buttonCorner = Instance.new("UICorner")
+        local buttonIcon = Instance.new("ImageLabel")
+        local buttonText = Instance.new("TextLabel")
+        local buttonDesc = Instance.new("TextLabel")
+        local buttonClick = Instance.new("TextButton")
+
+        tabButton.Name = "TabButton"
+        tabButton.Parent = menuScroll
+        tabButton.BackgroundTransparency = 1
+        tabButton.BorderSizePixel = 0
+        tabButton.ClipsDescendants = false
+        tabButton.Size = UDim2.new(0.5, 0, 0.75, 0)
+        tabButton.ZIndex = 4
+
+        aspectRatio.Parent = tabButton
+        aspectRatio.AspectRatio = 0.1
+        aspectRatio.AspectType = Enum.AspectType.ScaleWithParentSize
+        aspectRatio.DominantAxis = Enum.DominantAxis.Height
+
+        Tween(aspectRatio, {AspectRatio = 4}, 0.3 + (#window.Tabs / 10), Enum.EasingStyle.Back)
+
+        buttonCorner.CornerRadius = UDim.new(0, 3)
+        buttonCorner.Parent = tabButton
+
+        buttonIcon.Name = "Icon"
+        buttonIcon.Parent = tabButton
+        buttonIcon.BackgroundTransparency = 1
+        buttonIcon.BorderSizePixel = 0
+        buttonIcon.Size = UDim2.new(1, 0, 1, 0)
+        buttonIcon.SizeConstraint = Enum.SizeConstraint.RelativeYY
+        buttonIcon.ZIndex = 5
+        buttonIcon.Image = tabIcon
+
+        buttonText.Name = "Text"
+        buttonText.Parent = tabButton
+        buttonText.BackgroundTransparency = 1
+        buttonText.Position = UDim2.new(0.011, 0, 0.5, 0)
+        buttonText.Size = UDim2.new(2.11, 0, 0.5, 0)
+        buttonText.ZIndex = 5
+        buttonText.Font = Enum.Font.GothamBold
+        buttonText.Text = tabName
+        buttonText.TextColor3 = Color3.fromRGB(100, 100, 15)
+        buttonText.TextTransparency = 0.8
+        buttonText.TextScaled = true
+        buttonText.TextSize = 14
+        buttonText.TextWrapped = true
+        buttonText.TextXAlignment = Enum.TextXAlignment.Left
+
+        buttonDesc.Name = "Description"
+        buttonDesc.Parent = tabButton
+        buttonDesc.BackgroundTransparency = 1
+        buttonDesc.Position = UDim2.new(0.111, 0, 0.6, 0)
+        buttonDesc.Size = UDim2.new(2.11, 0, 0.35, 0)
+        buttonDesc.ZIndex = 5
+        buttonDesc.Font = Enum.Font.GothamBold
+        buttonDesc.Text = tabDescription
+        buttonDesc.TextColor3 = Color3.fromRGB(255, 255, 255)
+        buttonDesc.TextScaled = true
+        buttonDesc.TextSize = 14
+        buttonDesc.TextTransparency = 0.8
+        buttonDesc.TextWrapped = true
+        buttonDesc.TextXAlignment = Enum.TextXAlignment.Left
+
+        buttonClick.Name = "Button"
+        buttonClick.Parent = tabButton
+        buttonClick.BackgroundTransparency = 1
+        buttonClick.Size = UDim2.new(1, 0, 1, 0)
+        buttonClick.ZIndex = 25
+        buttonClick.Text = ""
+        buttonClick.TextTransparency = 1
+
+        -- Tab Content
+        local tabContent
+        if #window.Tabs == 0 then
+            -- First tab is visible by default
+            Tween(buttonText, {TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0}, 0.1)
+            Tween(buttonDesc, {TextTransparency = 0.5}, 0.1)
+        else
+            Tween(buttonText, {TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0.8}, 0.1)
+            Tween(buttonDesc, {TextTransparency = 0.8}, 0.1)
+        end
+
+        -- Add to tabs table
+        table.insert(window.Tabs, {tabButton, function(visible)
+            if visible then
+                Tween(buttonText, {TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0}, 0.1)
+                Tween(buttonDesc, {TextTransparency = 0.5}, 0.1)
+            else
+                Tween(buttonText, {TextColor3 = Color3.fromRGB(255, 255, 255), TextTransparency = 0.8}, 0.1)
+                Tween(buttonDesc, {TextTransparency = 0.8}, 0.1)
+            end
+        end})
+
+        local tabIndex = #window.Tabs
+
+        -- Tab click functionality
+        buttonClick.MouseButton1Click:Connect(function()
+            window.TabSelect = tabIndex
+            for i, v in ipairs(window.Tabs) do
+                if v[1] == tabButton then
+                    v[2](true)
+                else
+                    v[2](false)
+                end
+            end
+        end)
+
+        -- Tab functions
+        function tab:AddSection(sectionName, sectionHeader, sectionDesc, sectionIcon)
+            -- Section implementation would go here
+            -- Similar to your original code but with Proximity Hub styling
+        end
+
+        return tab
+    end
+
+    return window
 end
 
 return ProximityHub
